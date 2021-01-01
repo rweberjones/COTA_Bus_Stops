@@ -121,11 +121,11 @@ def create_CSV (bus_stop_locations, check_later):
     outfile = open('COTA_Bus_Stop_Locations.csv','w+', newline ="")
     out_writer = csv.writer(outfile, dialect='excel')
     out_writer.writerow(['Address','Zip Code'])
-    zip_codes_weird_address=[]
-
+    zip_codes_weird_address=[] # create list to store zip codes of all "previous stops" to assume for the 
+                                #check_later bus stops that did not contain address text
     for bus_stop in bus_stop_locations:
         
-        if bus_stop is not None:
+        #if bus_stop is not None:
             
             location = geolocator.geocode(bus_stop)
             
@@ -133,23 +133,24 @@ def create_CSV (bus_stop_locations, check_later):
                
                 data = location.raw
                 loc_data = data['display_name'].split()
-                s=str(loc_data[-3])
+                s=str(loc_data[-3]) #zip code pulled from location data to be written in a separate column
                 out_writer.writerow([location, s[:-1]])
-                zip_codes_weird_address.append(s[:-1])
+                zip_codes_weird_address.append(s[:-1]) #add zip code to list of all zip codes to be used in for check_later bus stops
             
             else:
                
-                out_writer.writerow([bus_stop, s[:-1]])
-                zip_codes_weird_address.append(s[:-1])
+                out_writer.writerow([bus_stop, s[:-1]]) #if geolocator cannot find address from parsed text, assume zip code of previous stop
+                zip_codes_weird_address.append(s[:-1]) #still add zip code assumed to list of all zip codes to be used for check_later bus stops
 
-    final = check_later.pop()  
+    final = check_later.pop() #remove last index due to index discepencies  
+    
     for weird_address in check_later:
         
-        index_needed = weird_address[1]
-        zip_code = zip_codes_weird_address[index_needed]
-        out_writer.writerow([weird_address, zip_code])
+        index_needed = weird_address[1] #the second element of check_later elements contains the index of previous stop locations
+        zip_code = zip_codes_weird_address[index_needed] #use the index of zip code needed to search through list of zip codes found to assume zip code of previous stop
+        out_writer.writerow([weird_address, zip_code]) #write the name of the stop location with the assumed zip code of previous stop location
 
-    out_writer.writerow([final, zip_code])            
+    out_writer.writerow([final, zip_code]) #write final bus stop to csv file. Assume zip code of previous stop location.            
     outfile.close()
 
 """---------- Function Calls (#TELLITWHATTODO) ------------"""
