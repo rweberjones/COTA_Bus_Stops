@@ -21,11 +21,12 @@ string_list = []
 website_links = []
 bus_stop_locations = []
 
-"""--------Function Defs--------"""
+"""---------------------------------------Function Defs-----------------------------------"""
 
-# MERGE_LISTS:
-# function meges lists of bus lines shown on main page with
-# list of bus lines after clicking "show additional lines"
+# --------------------MERGE_LISTS-----------------------------
+""" function meges lists of bus lines shown on main page with
+list of bus lines after clicking 'show additional lines' """
+
 def merge_lists(start_list, other_list):
     
     for elements in start_list:
@@ -35,8 +36,9 @@ def merge_lists(start_list, other_list):
         recurse_list.append(elements.find_next())
 
 
-# HAS_CHILD:
-# function that checks to see if node in tree has a child
+# ------------------------HAS_CHILD----------------------------
+""" function that checks to see if node in tree has a child """
+
 def hasChild(node):
     
     try: 
@@ -46,38 +48,42 @@ def hasChild(node):
     except:
         return False
 
-# GET_WHAT_I_WANT:
-# function that recursively calls itself until there is only 
-# one 'a' tag remaining in each element of array            
+# -----------------------GET_WHAT_I_WANT-------------------------
+""" function that recursively calls itself until there is only
+one 'a' tag remaining in each element of array """    
+
 def get_what_i_want (html_ish):
     
     for smaller in html_ish:
         if (hasChild(smaller)):
             get_what_i_want(smaller.extract())
        
-# MAKE_A_STRING_LIST:
-# function that takes html code from main page and pulls 
-# out the "ends" of html links for each bus line
+# --------------------MAKE_A_STRING_LIST-----------------------
+""" function that takes html code from main page and pulls 
+out the "ends" of html links for each bus line """
+
 def make_a_string_list (useless_stuff):
     
     for stuff in useless_stuff:
         string_list.append(str(stuff))
 
-# MAKE_THE_LINK:
-# function that creates the html link for each bus line
+# ---------------------MAKE_THE_LINK--------------------------
+""" function that creates the html link for each bus line """
+
 def make_the_link (almost):
 
     for letters in almost:
         link = "https://moovitapp.com/index/en/"+letters[9:-9]
         website_links.append(link)
 
-# GET_STOP_LOCATIONS:
-# function to use list of html links and parse stop locations from
-# each COTA bus line page link. Creates "Check-later" list for stops
-# that do not have an address. Uses header to get stop intersection,
-# then tracks the index of the previous stop that did have an address
-# to use that zip code, because it is likely previous stop was also
-# in same zip code
+# ---------------------GET_STOP_LOCATIONS----------------------------
+""" function to use list of html links and parse stop locations from
+each COTA bus line page link. Creates "Check_Later" list for stops
+that do not have an address. Uses header to get stop intersection,
+then tracks the index of the previous stop that did have an address
+to use that zip code, because it is likely previous stop was also
+in same zip code """
+
 def get_stop_locations (website_links):
     
     check_later = [] #list of stops without address listed
@@ -111,10 +117,11 @@ def get_stop_locations (website_links):
     
     return check_later
     
-# CREATE_CSV:
-# fuction to open csv file stream, get full locations + zip from parsed text in 
-# bus_stop_locations array, and write location data to csv file. Checks list of 
-# addresses from Check_Later and uses zip codes from index of previous stop
+# ---------------------------------CREATE_CSV-----------------------------------
+"""fuction to open csv file stream, get full locations + zip from parsed text in 
+bus_stop_locations array, and write location data to csv file. Checks list of 
+addresses from Check_Later and assumes zip codes from index of previous stop"""
+
 def create_CSV (bus_stop_locations, check_later):
     
     geolocator = Nominatim(user_agent="COTA_Bus_Stops")
@@ -123,24 +130,22 @@ def create_CSV (bus_stop_locations, check_later):
     out_writer.writerow(['Address','Zip Code'])
     zip_codes_weird_address=[] # create list to store zip codes of all "previous stops" to assume for the 
                                 #check_later bus stops that did not contain address text
+
     for bus_stop in bus_stop_locations:
-        
-        #if bus_stop is not None:
+        location = geolocator.geocode(bus_stop)
             
-            location = geolocator.geocode(bus_stop)
-            
-            if location is not None:
+        if location is not None:
                
-                data = location.raw
-                loc_data = data['display_name'].split()
-                s=str(loc_data[-3]) #zip code pulled from location data to be written in a separate column
-                out_writer.writerow([location, s[:-1]])
-                zip_codes_weird_address.append(s[:-1]) #add zip code to list of all zip codes to be used in for check_later bus stops
+            data = location.raw
+            loc_data = data['display_name'].split()
+            s=str(loc_data[-3]) #zip code pulled from location data to be written in a separate column
+            out_writer.writerow([location, s[:-1]])
+            zip_codes_weird_address.append(s[:-1]) #add zip code to list of all zip codes to be used in for check_later bus stops
             
-            else:
+        else:
                
-                out_writer.writerow([bus_stop, s[:-1]]) #if geolocator cannot find address from parsed text, assume zip code of previous stop
-                zip_codes_weird_address.append(s[:-1]) #still add zip code assumed to list of all zip codes to be used for check_later bus stops
+            out_writer.writerow([bus_stop, s[:-1]]) #if geolocator cannot find address from parsed text, assume zip code of previous stop
+            zip_codes_weird_address.append(s[:-1]) #still add zip code assumed to list of all zip codes to be used for check_later bus stops
 
     final = check_later.pop() #remove last index due to index discepencies  
     
